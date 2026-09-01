@@ -1,0 +1,906 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------
+// PHASE 1: CORE MULTI-CITY, USERS, DIRECTORY & SHOPS
+// ----------------------------------------------------
+
+model City {
+  id          String   @id @default(uuid())
+  name        String
+  nameUr      String?
+  slug        String   @unique
+  country     String   @default("Pakistan")
+  province    String   @default("Punjab")
+  division    String   @default("D.G. Khan Division")
+  district    String   @default("Rajanpur District")
+  tehsil      String?
+  displayOrder Int     @default(0)
+  latitude    Float    @default(29.6433)
+  longitude   Float    @default(70.5950)
+  radiusKm    Float    @default(15.0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  areas            Area[]
+  users            User[]
+  businesses       Business[]
+  locations        BusinessLocation[]
+  serviceProviders ServiceProvider[]
+  serviceRequests  ServiceRequest[]
+  deliveryRiders   DeliveryRider[]
+  orders           Order[]
+  aiLogs           AiInteractionLog[]
+  farmerProfiles   FarmerProfile[]
+  mandiRates       MandiRate[]
+  studentProfiles  StudentProfile[]
+  educationalOrgs  EducationalOrganization[]
+  opportunities    Opportunity[]
+  studentListings  StudentListing[]
+  studentGroups    StudentGroup[]
+  adCampaigns      AdCampaign[]
+  analyticsEvents  AnalyticsEvent[]
+
+  @@map("cities")
+}
+
+model Area {
+  id         String   @id @default(uuid())
+  cityId     String
+  name       String
+  nameUr     String?
+  postalCode String?
+  latitude   Float?
+  longitude  Float?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  city       City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@map("areas")
+}
+
+model Role {
+  id          String     @id
+  name        String
+  description String?
+  permissions String     @default("[]")
+  createdAt   DateTime   @default(now())
+
+  userRoles   UserRole[]
+
+  @@map("roles")
+}
+
+model User {
+  id                String         @id @default(uuid())
+  cityId            String
+  phoneNumber       String         @unique
+  email             String?        @unique
+  passwordHash      String
+  fullName          String
+  fullNameUr        String?
+  avatarUrl         String?
+  preferredLanguage String         @default("ur")
+  isPhoneVerified   Boolean        @default(false)
+  isActive          Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  city              City           @relation(fields: [cityId], references: [id])
+  roles             UserRole[]
+  businesses        Business[]     @relation("BusinessOwner")
+  reviews           Review[]
+  reviewReports     ReviewReport[] @relation("ReportedByUser")
+  auditLogs         AuditLog[]
+
+  // Phase 2 Relations
+  serviceProfile       ServiceProvider? @relation("UserServiceProvider")
+  customerRequests     ServiceRequest[]  @relation("CustomerRequests")
+  givenProviderReviews ProviderReview[]  @relation("CustomerProviderReviews")
+  notifications        Notification[]
+
+  // Phase 3 Relations
+  riderProfile         DeliveryRider?    @relation("UserDeliveryRider")
+  customerOrders       Order[]           @relation("CustomerOrders")
+  givenOrderReviews    OrderReview[]     @relation("CustomerOrderReviews")
+
+  // Phase 5 Relations
+  farmerProfile        FarmerProfile?    @relation("UserFarmerProfile")
+
+  // Phase 6 Relations
+  studentProfile       StudentProfile?   @relation("UserStudentProfile")
+
+  @@map("users")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model BusinessCategory {
+  id          String     @id @default(uuid())
+  slug        String     @unique
+  name        String
+  nameUr      String?
+  icon        String     @default("store")
+  description String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+
+  businesses  Business[]
+  services    Service[]
+
+  @@map("business_categories")
+}
+
+model Business {
+  id            String             @id @default(uuid())
+  cityId        String
+  ownerId       String
+  categoryId    String
+  name          String
+  nameUr        String?
+  slug          String
+  description   String?
+  descriptionUr String?
+  phone         String
+  whatsapp      String?
+  logoUrl       String?
+  bannerUrl     String?
+  status        String             @default("PENDING") // PENDING, APPROVED, REJECTED, SUSPENDED
+  isVerified    Boolean            @default(false)
+  isFeatured    Boolean            @default(false)
+  ratingAverage Float              @default(0.0)
+  reviewCount   Int                @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  city          City               @relation(fields: [cityId], references: [id])
+  owner         User               @relation("BusinessOwner", fields: [ownerId], references: [id])
+  category      BusinessCategory   @relation(fields: [categoryId], references: [id])
+  locations     BusinessLocation[]
+  hours         BusinessHour[]
+  products      Product[]
+  reviews       Review[]
+  offers        Offer[]
+  orders        Order[]
+  orderReviews  OrderReview[]
+  postedOpportunities Opportunity[]
+  subscriptions BusinessSubscription[]
+  adCampaigns   AdCampaign[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@unique([cityId, slug])
+  @@index([cityId, status])
+  @@index([categoryId, status])
+  @@map("businesses")
+}
+
+model BusinessLocation {
+  id            String   @id @default(uuid())
+  businessId    String
+  cityId        String
+  addressLine   String
+  addressLineUr String?
+  area          String   @default("City Center")
+  landmark      String?
+  latitude      Float    @default(29.6433)
+  longitude     Float    @default(70.5950)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  city          City     @relation(fields: [cityId], references: [id])
+
+  @@map("business_locations")
+}
+
+model BusinessHour {
+  id         String   @id @default(uuid())
+  businessId String
+  dayOfWeek  Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  openTime   String   @default("09:00")
+  closeTime  String   @default("21:00")
+  isClosed   Boolean  @default(false)
+
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, dayOfWeek])
+  @@map("business_hours")
+}
+
+model Product {
+  id                  String      @id @default(uuid())
+  businessId          String
+  name                String
+  nameUr              String?
+  description         String?
+  price               Float
+  compareAtPrice      Float?
+  unit                String      @default("piece") // kg, liter, piece, service, meter
+  stockQuantity       Int         @default(100)
+  sku                 String?
+  isAvailable         Boolean     @default(true)
+  isDeliveryAvailable Boolean     @default(true)
+  imageUrl            String?
+  images              String      @default("[]") // JSON array of strings
+  discountPercentage  Float       @default(0.0)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  business            Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  orderItems          OrderItem[]
+
+  @@map("products")
+}
+
+model Review {
+  id         String         @id @default(uuid())
+  businessId String
+  userId     String
+  rating     Int            // 1 to 5
+  comment    String
+  isFlagged  Boolean        @default(false)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports    ReviewReport[]
+
+  @@unique([businessId, userId])
+  @@map("reviews")
+}
+
+model ReviewReport {
+  id         String   @id @default(uuid())
+  reviewId   String
+  reporterId String
+  reason     String
+  status     String   @default("PENDING") // PENDING, RESOLVED, DISMISSED
+  createdAt  DateTime @default(now())
+
+  review     Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reporter   User     @relation("ReportedByUser", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@map("review_reports")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String   // e.g. "BUSINESS_APPROVED", "ORDER_DELIVERED", "RIDER_APPROVED"
+  entityType String   // "BUSINESS", "PROVIDER", "ORDER", "RIDER", "USER"
+  entityId   String
+  details    String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+// ----------------------------------------------------
+// PHASE 2: SERVICES MARKETPLACE MODELS
+// ----------------------------------------------------
+
+model Service {
+  id                String            @id @default(uuid())
+  categoryId        String
+  name              String            // e.g. "AC General Service & Gas Refill"
+  nameUr            String?           // e.g. "اے سی سروس اور گیس ریفل"
+  slug              String            @unique
+  description       String?
+  basePriceEstimate Float?            @default(1500)
+  icon              String            @default("wrench")
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+
+  category          BusinessCategory  @relation(fields: [categoryId], references: [id])
+  requests          ServiceRequest[]
+
+  @@map("services")
+}
+
+model ServiceProvider {
+  id              String            @id @default(uuid())
+  userId          String            @unique
+  cityId          String
+  categorySlug    String            @default("home-services")
+  primarySkill    String
+  primarySkillUr  String?
+  secondarySkills String            @default("[]")
+  cnicNumber      String
+  experienceYears Int               @default(2)
+  baseVisitFee    Float             @default(500)
+  serviceAreas    String            @default("[\"All Jampur\"]")
+  portfolioPhotos String            @default("[]")
+  status          String            @default("PENDING") // PENDING, APPROVED, REJECTED, SUSPENDED
+  isVerified      Boolean           @default(false)
+  isAvailable     Boolean           @default(true)
+  ratingAverage   Float             @default(0.0)
+  reviewCount     Int               @default(0)
+  jobsCompleted   Int               @default(0)
+  totalEarnings   Float             @default(0.0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user            User              @relation("UserServiceProvider", fields: [userId], references: [id], onDelete: Cascade)
+  city            City              @relation(fields: [cityId], references: [id])
+  quotes          Quote[]
+  assignedJobs    ServiceRequest[]  @relation("AssignedProviderRequests")
+  reviews         ProviderReview[]
+
+  @@map("service_providers")
+}
+
+model ServiceRequest {
+  id                 String           @id @default(uuid())
+  cityId             String
+  customerId         String
+  serviceId          String?
+  categorySlug       String           @default("home-services")
+  title              String
+  description        String
+  photoUrl           String?
+  urgency            String           @default("MEDIUM") // LOW, MEDIUM, HIGH, EMERGENCY
+  addressLine        String
+  area               String           @default("City Center")
+  preferredDate      String?
+  preferredTimeSlot  String?
+  status             String           @default("OPEN") // OPEN, QUOTED, ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+  assignedProviderId String?
+  finalPrice         Float?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  city               City             @relation(fields: [cityId], references: [id])
+  customer           User             @relation("CustomerRequests", fields: [customerId], references: [id], onDelete: Cascade)
+  service            Service?         @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  assignedProvider   ServiceProvider? @relation("AssignedProviderRequests", fields: [assignedProviderId], references: [id], onDelete: SetNull)
+  quotes             Quote[]
+  review             ProviderReview?
+
+  @@map("service_requests")
+}
+
+model Quote {
+  id                String          @id @default(uuid())
+  requestId         String
+  providerId        String
+  estimatedAmount   Float
+  estimatedArrival  String
+  estimatedDuration String          @default("1-2 hours")
+  notes             String?
+  status            String          @default("PENDING") // PENDING, ACCEPTED, REJECTED, WITHDRAWN
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  request           ServiceRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  provider          ServiceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, providerId])
+  @@map("quotes")
+}
+
+model ProviderReview {
+  id          String          @id @default(uuid())
+  requestId   String          @unique
+  providerId  String
+  customerId  String
+  rating      Int             // 1 to 5
+  comment     String
+  createdAt   DateTime        @default(now())
+
+  request     ServiceRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  provider    ServiceProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  customer    User            @relation("CustomerProviderReviews", fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("provider_reviews")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  titleUr   String?
+  message   String
+  messageUr String?
+  type      String   @default("GENERAL") // SERVICE_REQUEST, QUOTE_RECEIVED, QUOTE_ACCEPTED, ORDER_STATUS, GENERAL
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ----------------------------------------------------
+// PHASE 3: LOCAL COMMERCE, ORDERS & DELIVERY FLEET
+// ----------------------------------------------------
+
+model DeliveryRider {
+  id                  String        @id @default(uuid())
+  userId              String        @unique
+  cityId              String
+  vehicleType         String        @default("MOTORCYCLE") // MOTORCYCLE, RICKSHAW, BICYCLE
+  vehicleNumber       String        @default("DGK-1234")
+  cnicNumber          String
+  status              String        @default("PENDING") // PENDING, APPROVED, REJECTED, SUSPENDED
+  isVerified          Boolean       @default(false)
+  isAvailable         Boolean       @default(true)
+  deliveriesCompleted Int           @default(0)
+  totalEarnings       Float         @default(0.0)
+  ratingAverage       Float         @default(0.0)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  user                User          @relation("UserDeliveryRider", fields: [userId], references: [id], onDelete: Cascade)
+  city                City          @relation(fields: [cityId], references: [id])
+  assignedOrders      Order[]       @relation("RiderOrders")
+
+  @@map("delivery_riders")
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  orderNumber     String         @unique // e.g. "JMP-2026-0001"
+  customerId      String
+  businessId      String
+  cityId          String
+  riderId         String?
+  status          String         @default("PENDING") // PENDING, ACCEPTED, PREPARING, READY_FOR_PICKUP, OUT_FOR_DELIVERY, DELIVERED, COMPLETED, CANCELLED, REFUNDED
+  deliveryAddress String
+  deliveryArea    String         @default("City Center")
+  deliveryNotes   String?
+  deliveryPin     String         @default("1234") // 4-digit proof-of-delivery OTP
+  subtotal        Float
+  deliveryFee     Float          @default(100.0)
+  discountAmount  Float          @default(0.0)
+  totalAmount     Float
+  paymentMethod   String         @default("COD") // COD, RAAST, JAZZCASH, EASYPAISA, BANK_TRANSFER
+  paymentStatus   String         @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  customer        User           @relation("CustomerOrders", fields: [customerId], references: [id], onDelete: Cascade)
+  business        Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  city            City           @relation(fields: [cityId], references: [id])
+  rider           DeliveryRider? @relation("RiderOrders", fields: [riderId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  payment         Payment?
+  review          OrderReview?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  productId String
+  name      String
+  nameUr    String?
+  unit      String   @default("piece")
+  price     Float    // Price at time of order
+  quantity  Int      @default(1)
+  subtotal  Float
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+model Payment {
+  id                   String   @id @default(uuid())
+  orderId              String   @unique
+  amount               Float
+  currency             String   @default("PKR")
+  method               String   @default("COD") // COD, RAAST, JAZZCASH, EASYPAISA, BANK_TRANSFER
+  status               String   @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  transactionReference String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Offer {
+  id                 String   @id @default(uuid())
+  businessId         String
+  title              String
+  titleUr            String?
+  description        String?
+  discountPercentage Float    @default(10.0)
+  minOrderAmount     Float    @default(0.0)
+  bannerUrl          String?
+  isFeatured         Boolean  @default(false)
+  isActive           Boolean  @default(true)
+  startDate          DateTime @default(now())
+  endDate            DateTime
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("offers")
+}
+
+model OrderReview {
+  id          String   @id @default(uuid())
+  orderId     String   @unique
+  customerId  String
+  businessId  String
+  riderId     String?
+  rating      Int      // 1 to 5
+  comment     String
+  riderRating Int?     // 1 to 5
+  createdAt   DateTime @default(now())
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer    User     @relation("CustomerOrderReviews", fields: [customerId], references: [id], onDelete: Cascade)
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@map("order_reviews")
+}
+
+// ----------------------------------------------------
+// PHASE 4: AI LOCAL ASSISTANT & TELEMETRY LOGS
+// ----------------------------------------------------
+
+model AiInteractionLog {
+  id               String   @id @default(uuid())
+  userId           String?
+  cityId           String
+  query            String
+  detectedLanguage String   @default("roman_ur") // en, ur, roman_ur
+  extractedIntent  String   // SERVICE_SEARCH, BUSINESS_SEARCH, PRODUCT_SEARCH, OFFER_SEARCH, GENERAL_INFO
+  parameters       String   @default("{}") // JSON string of extracted parameters
+  entityCount      Int      @default(0)
+  status           String   @default("SUCCESS") // SUCCESS, NO_RESULTS, ERROR
+  latencyMs        Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  city             City     @relation(fields: [cityId], references: [id])
+
+  @@map("ai_interaction_logs")
+}
+
+// ----------------------------------------------------
+// PHASE 5: FARMER HUB & AGRICULTURE INTELLIGENCE
+// ----------------------------------------------------
+
+model FarmerProfile {
+  id              String          @id @default(uuid())
+  userId          String          @unique
+  cityId          String
+  farmName        String          @default("My Farm")
+  totalAcres      Float           @default(5.0)
+  irrigationType  String          @default("TUBEWELL") // CANAL, TUBEWELL, SOLAR_TUBEWELL, RAINFED
+  soilType        String          @default("CLAY_LOAM") // CLAY_LOAM, SANDY_LOAM, SILT, LOAM
+  addressLine     String?
+  villageMouza    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user            User            @relation("UserFarmerProfile", fields: [userId], references: [id], onDelete: Cascade)
+  city            City            @relation(fields: [cityId], references: [id])
+  crops           Crop[]
+  diagnoses       CropDiagnosis[]
+
+  @@map("farmer_profiles")
+}
+
+model Crop {
+  id                   String          @id @default(uuid())
+  farmerId             String
+  name                 String          // Cotton, Wheat, Sugarcane, Rice, Mango, etc.
+  nameUr               String?         // کپاس، گندم، کماد، وغیرہ
+  variety              String?         // BT Cotton BS-15, Akbar-2019, etc.
+  acresPlanted         Float           @default(1.0)
+  sowingDate           DateTime
+  expectedHarvestDate  DateTime?
+  stage                String          @default("VEGETATIVE") // SOWING, VEGETATIVE, FLOWERING, MATURITY, HARVESTED
+  estimatedYieldMaunds Float?
+  notes                String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  farmer               FarmerProfile   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  diagnoses            CropDiagnosis[]
+
+  @@map("crops")
+}
+
+model CropDiagnosis {
+  id                       String        @id @default(uuid())
+  farmerId                 String
+  cropId                   String?
+  imageUrl                 String?
+  cropName                 String
+  symptoms                 String
+  diseaseDetected          String
+  diseaseDetectedUr        String?
+  confidenceScore          Float         @default(0.85) // e.g. 0.88 = 88%
+  explanation              String
+  treatmentRecommendations String
+  disclaimer               String
+  status                   String        @default("ACTIVE") // ACTIVE, RESOLVED
+  createdAt                DateTime      @default(now())
+
+  farmer                   FarmerProfile @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  crop                     Crop?         @relation(fields: [cropId], references: [id], onDelete: SetNull)
+
+  @@map("crop_diagnoses")
+}
+
+model MandiRate {
+  id            String   @id @default(uuid())
+  cityId        String
+  cropName      String   // Cotton, Wheat, Sugarcane, Mustard, Sesame, etc.
+  cropNameUr    String?  // کپاس، گندم، کماد، سرسوں، تل
+  variety       String?  // Super, Grade-A, Desi, Hybrid
+  mandiLocation String   @default("Jampur Galla Mandi")
+  minPrice      Float    // in PKR
+  maxPrice      Float    // in PKR
+  modalPrice    Float    // in PKR
+  unit          String   @default("40 kg (1 Maan)")
+  trend         String   @default("STABLE") // UP, DOWN, STABLE
+  reportedDate  DateTime @default(now())
+
+  city          City     @relation(fields: [cityId], references: [id])
+
+  @@map("mandi_rates")
+}
+
+// ----------------------------------------------------
+// PHASE 6: STUDENT ECOSYSTEM & OPPORTUNITIES
+// ----------------------------------------------------
+
+model StudentProfile {
+  id               String                   @id @default(uuid())
+  userId           String                   @unique
+  cityId           String
+  educationLevel   String                   @default("BACHELORS") // MATRIC, INTERMEDIATE, BACHELORS, MASTERS, DIPLOMA, OTHER
+  institutionName  String                   @default("Govt College Jampur")
+  fieldOfStudy     String?                  // Computer Science, Pre-Medical, Commerce, etc.
+  skills           String                   @default("[]") // JSON array of skill strings
+  interests        String                   @default("[]") // JSON array of interest strings
+  graduationYear   Int?
+  bio              String?
+  cgpaOrMarks      String?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  user             User                     @relation("UserStudentProfile", fields: [userId], references: [id], onDelete: Cascade)
+  city             City                     @relation(fields: [cityId], references: [id])
+  applications     OpportunityApplication[]
+  listings         StudentListing[]
+
+  @@map("student_profiles")
+}
+
+model EducationalOrganization {
+  id          String        @id @default(uuid())
+  cityId      String
+  name        String
+  nameUr      String?
+  type        String        @default("COLLEGE") // COLLEGE, UNIVERSITY, VOCATIONAL_INSTITUTE, ACADEMY, SCHOOL
+  address     String
+  phone       String?
+  website     String?
+  description String?
+  isVerified  Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  city          City          @relation(fields: [cityId], references: [id])
+  opportunities Opportunity[]
+
+  @@map("educational_organizations")
+}
+
+model Opportunity {
+  id                  String                   @id @default(uuid())
+  cityId              String
+  organizationId      String?
+  businessId          String?
+  title               String
+  titleUr             String?
+  type                String                   // JOB, INTERNSHIP, SCHOLARSHIP, COMPETITION, EVENT, TRAINING, FREELANCING
+  organizationName    String
+  description         String
+  eligibilityCriteria String?
+  location            String                   @default("Jampur")
+  stipendOrSalary     String?                  // e.g. "PKR 25,000 / month", "Full Tuition Grant", "Unpaid"
+  applicationDeadline DateTime?
+  source              String                   @default("Official Organization")
+  applicationUrl      String?
+  status              String                   @default("APPROVED") // PENDING, APPROVED, REJECTED, EXPIRED
+  isVerified          Boolean                  @default(true)
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  city                City                     @relation(fields: [cityId], references: [id])
+  organization        EducationalOrganization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  business            Business?                @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  applications        OpportunityApplication[]
+
+  @@map("opportunities")
+}
+
+model OpportunityApplication {
+  id            String         @id @default(uuid())
+  opportunityId String
+  studentId     String
+  coverLetter   String?
+  resumeUrl     String?
+  status        String         @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, ACCEPTED, REJECTED
+  appliedAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  opportunity   Opportunity    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityId, studentId])
+  @@map("opportunity_applications")
+}
+
+model StudentListing {
+  id           String         @id @default(uuid())
+  studentId    String
+  cityId       String
+  title        String
+  titleUr      String?
+  category     String         // BOOKS, DEVICES, STUDY_MATERIALS, STUDENT_SERVICES
+  price        Float          // in PKR (0 for free donation)
+  condition    String         @default("GOOD") // NEW, LIKE_NEW, GOOD, FAIR
+  description  String
+  contactPhone String
+  imageUrl     String?
+  status       String         @default("ACTIVE") // ACTIVE, SOLD
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  city         City           @relation(fields: [cityId], references: [id])
+
+  @@map("student_listings")
+}
+
+model StudentGroup {
+  id               String   @id @default(uuid())
+  cityId           String
+  name             String
+  nameUr           String?
+  topicCategory    String   // MDCAT, ECAT, CSS_PMS, COMPUTER_SCIENCE, FREELANCING, GENERAL
+  description      String
+  meetingSchedule  String   @default("Weekly Online / Campus")
+  organizerContact String?
+  memberCount      Int      @default(1)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  city             City     @relation(fields: [cityId], references: [id])
+
+  @@map("student_groups")
+}
+
+// ----------------------------------------------------
+// PHASE 8: MONETIZATION, ADVERTISING & PRODUCTION TELEMETRY
+// ----------------------------------------------------
+
+model SubscriptionPlan {
+  id                    String                 @id @default(uuid())
+  name                  String                 @unique // BASIC, PRO, PREMIUM
+  nameUr                String?
+  priceMonthly          Float                  @default(0) // in PKR (0 for Basic, 999 for Pro, 2499 for Premium)
+  priceAnnual           Float                  @default(0) // in PKR
+  productLimit          Int                    @default(10)
+  offerLimit            Int                    @default(1)
+  canUseAiCopilot       Boolean                @default(false)
+  canUseAdvancedAnalytics Boolean              @default(false)
+  featuredPlacement     Boolean                @default(false)
+  whatsappLeads         Boolean                @default(true)
+  features              String                 @default("[]") // JSON string array
+  isActive              Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  subscriptions         BusinessSubscription[]
+
+  @@map("subscription_plans")
+}
+
+model BusinessSubscription {
+  id            String           @id @default(uuid())
+  businessId    String
+  planId        String
+  startDate     DateTime         @default(now())
+  endDate       DateTime
+  status        String           @default("ACTIVE") // ACTIVE, EXPIRED, CANCELLED
+  billingCycle  String           @default("MONTHLY") // MONTHLY, ANNUAL
+  paymentMethod String           @default("JAZZCASH") // JAZZCASH, EASYPAISA, BANK_TRANSFER, CASH
+  amountPaid    Float
+  paymentRef    String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  business      Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  plan          SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@map("business_subscriptions")
+}
+
+model PlatformSetting {
+  id                      String   @id @default("default")
+  marketplaceCommissionPercent Float @default(3.5) // 2-5% configurable
+  serviceLeadFeePKR       Float    @default(50.0) // 50 PKR per lead
+  featuredAdDailyRatePKR  Float    @default(150.0) // 150 PKR per day
+  updatedAt               DateTime @updatedAt
+
+  @@map("platform_settings")
+}
+
+model AdCampaign {
+  id               String   @id @default(uuid())
+  businessId       String
+  cityId           String
+  type             String   // FEATURED_LISTING, SPONSORED_SEARCH, LOCAL_BANNER, PROMOTED_OFFER
+  headline         String
+  headlineUr       String?
+  bannerUrl        String?
+  targetCategory   String?
+  dailyBudget      Float    @default(100.0) // in PKR
+  impressionsCount Int      @default(0)
+  clicksCount      Int      @default(0)
+  startDate        DateTime @default(now())
+  endDate          DateTime
+  status           String   @default("ACTIVE") // ACTIVE, PAUSED, EXPIRED
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  business         Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  city             City     @relation(fields: [cityId], references: [id])
+
+  @@map("ad_campaigns")
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  businessId String?
+  cityId     String
+  type       String   // PROFILE_VIEW, SEARCH_APPEARANCE, CALL_CLICK, WHATSAPP_CLICK, PRODUCT_VIEW, AI_QUERY
+  metadata   String?  // JSON string
+  createdAt  DateTime @default(now())
+
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  city       City      @relation(fields: [cityId], references: [id])
+
+  @@index([cityId, type, createdAt])
+  @@index([businessId, type, createdAt])
+  @@map("analytics_events")
+}
