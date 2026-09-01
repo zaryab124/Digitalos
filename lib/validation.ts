@@ -193,9 +193,20 @@ export const orderStatusUpdateSchema = z.object({
 
 export const riderRegistrationSchema = z.object({
   cityId: z.string().min(1, "City selection is required"),
-  vehicleType: z.enum(["MOTORCYCLE", "RICKSHAW", "BICYCLE"]).default("MOTORCYCLE"),
+  vehicleCategory: z
+    .enum(["BIKE", "AUTO_RICKSHAW", "LOADER_RICKSHAW", "CAR_TAXI", "PICKUP_TRUCK"])
+    .default("BIKE"),
+  vehicleType: z.string().default("MOTORCYCLE"),
+  vehicleMakeModel: z.string().optional().nullable(),
   vehicleNumber: z.string().min(3, "Vehicle registration number is required"),
   cnicNumber: z.string().min(13, "Valid CNIC number is required"),
+  licenseNumber: z.string().optional().nullable(),
+  serviceTypes: z.array(z.string()).optional().default(["PASSENGER_RIDE"]),
+  cargoCapacityKg: z.number().optional().nullable(),
+  baseLocation: z.string().optional().nullable(),
+  fullName: z.string().min(2).optional(),
+  phoneNumber: z.string().min(10).optional(),
+  password: z.string().min(6).optional(),
 });
 
 export const offerSchema = z.object({

@@ -387,6 +387,23 @@ export default function RidesHubClient({
                   onChange={(e) => setPickupAddress(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200"
                 />
+                <div className="flex flex-wrap gap-1 pt-1">
+                  <span className="text-[10px] text-slate-400">Quick Stands:</span>
+                  {["Sabzi Mandi & Fruits Market", "Ghalla Mandi (Grain Market)", "Bypass Chowk", "Main Bazaar"].map((hub) => (
+                    <button
+                      key={hub}
+                      type="button"
+                      onClick={() => setPickupArea(hub)}
+                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                        pickupArea === hub
+                          ? "bg-emerald-600 text-white border-emerald-600 font-bold"
+                          : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                      }`}
+                    >
+                      {hub.includes("Sabzi") ? "🥦 Sabzi Mandi" : hub.includes("Ghalla") ? "🌾 Ghalla Mandi" : hub}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Dropoff */}
@@ -413,6 +430,24 @@ export default function RidesHubClient({
                   onChange={(e) => setDropoffAddress(e.target.value)}
                   className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200"
                 />
+
+                <div className="flex flex-wrap gap-1 pt-1">
+                  <span className="text-[10px] text-slate-400">Quick Stops:</span>
+                  {["Sabzi Mandi & Fruits Market", "Ghalla Mandi (Grain Market)", "College Road", "THQ Hospital Road"].map((hub) => (
+                    <button
+                      key={hub}
+                      type="button"
+                      onClick={() => setDropoffArea(hub)}
+                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                        dropoffArea === hub
+                          ? "bg-rose-600 text-white border-rose-600 font-bold"
+                          : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                      }`}
+                    >
+                      {hub.includes("Sabzi") ? "🥦 Sabzi Mandi" : hub.includes("Ghalla") ? "🌾 Ghalla Mandi" : hub}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

@@ -42,6 +42,8 @@ export default function LoginPage() {
           router.push("/admin");
         } else if (userRoles.includes("BUSINESS_OWNER")) {
           router.push("/merchant/dashboard");
+        } else if (userRoles.includes("RIDER")) {
+          router.push("/rider/dashboard");
         } else {
           router.push("/");
         }
@@ -77,27 +79,34 @@ export default function LoginPage() {
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block text-center">
             Quick Fill Demo Accounts (Click to test)
           </span>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-4 gap-1.5">
             <button
               type="button"
               onClick={() => setDemoUser("+923001234000", "Admin@12345")}
-              className="py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold text-[11px] border border-indigo-200"
+              className="py-1.5 px-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold text-[10px] border border-indigo-200 text-center"
             >
               👑 Admin
             </button>
             <button
               type="button"
               onClick={() => setDemoUser("+923001234001", "Merchant@12345")}
-              className="py-1.5 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] border border-emerald-200"
+              className="py-1.5 px-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-200 text-center"
             >
-              🏪 Merchant
+              🏪 Shop
+            </button>
+            <button
+              type="button"
+              onClick={() => setDemoUser("+923007766554", "Rider@12345")}
+              className="py-1.5 px-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[10px] border border-amber-200 text-center"
+            >
+              🚚 Loader
             </button>
             <button
               type="button"
               onClick={() => setDemoUser("+923001234003", "Customer@12345")}
-              className="py-1.5 px-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-[11px]"
+              className="py-1.5 px-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-[10px] text-center"
             >
-              👤 Customer
+              👤 Citizen
             </button>
           </div>
         </div>

@@ -134,13 +134,17 @@ async function main() {
 
   // Seed Areas per city
   const jampurAreas = [
+    { name: "Sabzi Mandi & Fruits Market", nameUr: "سبزی منڈی و فروٹ مارکیٹ", postalCode: "33000" },
+    { name: "Ghalla Mandi (Grain Market)", nameUr: "غلہ منڈی", postalCode: "33000" },
+    { name: "Bypass Chowk", nameUr: "بائی پاس چوک", postalCode: "33000" },
     { name: "Main Bazaar", nameUr: "مین بازار", postalCode: "33000" },
-    { name: "College Road", nameUr: "کالج روڈ", postalCode: "33000" },
     { name: "Indus Highway", nameUr: "انڈس ہائی وے", postalCode: "33000" },
+    { name: "College Road", nameUr: "کالج روڈ", postalCode: "33000" },
     { name: "Kotla Dewan", nameUr: "کوٹلہ دیوان", postalCode: "33000" },
     { name: "Railway Road", nameUr: "ریلوے روڈ", postalCode: "33000" },
     { name: "Dajal Road", nameUr: "داجل روڈ", postalCode: "33000" },
     { name: "Model Town", nameUr: "ماڈل ٹاؤن", postalCode: "33000" },
+    { name: "THQ Hospital Road", nameUr: "ٹی ایچ کیو ہسپتال روڈ", postalCode: "33000" },
   ];
 
   await prisma.area.deleteMany({ where: { cityId: jampur.id } });
@@ -157,6 +161,7 @@ async function main() {
   }
 
   const rajanpurAreas = [
+    { name: "Sabzi Mandi Rajanpur", nameUr: "سبزی منڈی راجن پور", postalCode: "33500" },
     { name: "Katchery Road", nameUr: "کچہری روڈ", postalCode: "33500" },
     { name: "City Center", nameUr: "سٹی سنٹر", postalCode: "33500" },
     { name: "Kot Mithan Road", nameUr: "کوٹ مٹھن روڈ", postalCode: "33500" },
@@ -177,6 +182,7 @@ async function main() {
   }
 
   const dgKhanAreas = [
+    { name: "Sabzi Mandi D.G. Khan", nameUr: "سبزی منڈی ڈیرہ غازی خان", postalCode: "32200" },
     { name: "Model Town", nameUr: "ماڈل ٹاؤن", postalCode: "32200" },
     { name: "Block 1 to 10", nameUr: "بلاک 1 تا 10", postalCode: "32200" },
     { name: "College Road", nameUr: "کالج روڈ", postalCode: "32200" },

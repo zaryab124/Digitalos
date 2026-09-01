@@ -10,17 +10,15 @@ export const dynamic = "force-dynamic";
 export default async function RiderRegisterPage() {
   const user = await getCurrentUser();
 
-  if (!user) {
-    redirect("/auth/login?redirect=/rider/register");
-  }
+  // If already registered as a rider, send straight to dashboard
+  if (user) {
+    const existing = await prisma.deliveryRider.findUnique({
+      where: { userId: user.id },
+    });
 
-  // Check if already registered as a rider
-  const existing = await prisma.deliveryRider.findUnique({
-    where: { userId: user.id },
-  });
-
-  if (existing) {
-    redirect("/rider/dashboard");
+    if (existing) {
+      redirect("/rider/dashboard");
+    }
   }
 
   const [activeCity, cities] = await Promise.all([
@@ -28,24 +26,30 @@ export default async function RiderRegisterPage() {
     getAllActiveCities(),
   ]);
 
+  const areas = await prisma.area.findMany({
+    where: { cityId: activeCity.id, isActive: true },
+    orderBy: { name: "asc" },
+  });
+
   return (
     <div className="max-w-3xl mx-auto py-8 px-4 sm:px-6 space-y-6">
       <div className="space-y-1">
         <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold uppercase tracking-wider">
-          🛵 Delivery Rider Onboarding
+          🚖 Driver & Fleet Onboarding • ڈرائیور رجسٹریشن
         </span>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-          Earn with Jampur Digital Delivery Fleet
+          Drive & Earn in {activeCity.name}
         </h1>
         <p className="text-xs text-slate-500 font-urdu">
-          جام پور ڈیجیٹل ڈلیوری رائڈر بنیں — فی ڈلیوری معاوضہ اور لائیو آرڈرز
+          بائیک، چنگچی رکشہ، مال بردار لوڈر یا کار ٹیکسی رجسٹر کریں اور روزانہ عزت دار روزگار کمائیں
         </p>
       </div>
 
       <RiderRegisterClient
-        user={user}
+        user={user ? { id: user.id, fullName: user.fullName, phoneNumber: user.phoneNumber } : null}
         activeCity={activeCity}
         cities={cities}
+        areas={areas.map((a) => ({ id: a.id, name: a.name, nameUr: a.nameUr }))}
       />
     </div>
   );
