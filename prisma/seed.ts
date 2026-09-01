@@ -587,21 +587,158 @@ async function main() {
   });
   console.log("✅ Promotional Offers seeded.");
 
-  // 7. Seed Phase 3 Delivery Riders
+  // 7. Seed Multi-Vehicle Fleet & Riders (Bike, Rickshaw, Loader, Car)
   const rdrKamran = await prisma.deliveryRider.upsert({
     where: { userId: riderKamranUser.id },
-    update: {},
+    update: {
+      vehicleCategory: "BIKE",
+      vehicleType: "MOTORCYCLE",
+      vehicleMakeModel: "Honda CD 70",
+      serviceTypes: JSON.stringify(["PASSENGER_RIDE", "PARCEL_DELIVERY"]),
+      baseFare: 50.0,
+      perKmRate: 20.0,
+      status: "APPROVED",
+      isVerified: true,
+      isAvailable: true,
+      ridesCompleted: 142,
+    },
     create: {
       userId: riderKamranUser.id,
       cityId: jampur.id,
+      vehicleCategory: "BIKE",
       vehicleType: "MOTORCYCLE",
+      vehicleMakeModel: "Honda CD 70",
       vehicleNumber: "DGK-8821",
       cnicNumber: "32402-4433221-7",
+      licenseNumber: "LIC-DGK-9901",
+      serviceTypes: JSON.stringify(["PASSENGER_RIDE", "PARCEL_DELIVERY"]),
+      baseFare: 50.0,
+      perKmRate: 20.0,
       status: "APPROVED",
       isVerified: true,
       isAvailable: true,
       deliveriesCompleted: 42,
+      ridesCompleted: 142,
       totalEarnings: 8400,
+      ratingAverage: 4.9,
+    },
+  });
+
+  // Seed Auto Rickshaw Driver User & Profile
+  const rickshawUser = await prisma.user.upsert({
+    where: { phoneNumber: "+923005544332" },
+    update: {},
+    create: {
+      cityId: jampur.id,
+      phoneNumber: "+923005544332",
+      passwordHash: passwordHashRider,
+      fullName: "Ghulam Rasool (Auto Rickshaw)",
+      fullNameUr: "غلام رسول آٹو رکشہ",
+      isPhoneVerified: true,
+      roles: { create: [{ roleId: "RIDER" }, { roleId: "CUSTOMER" }] },
+    },
+  });
+
+  await prisma.deliveryRider.upsert({
+    where: { userId: rickshawUser.id },
+    update: {},
+    create: {
+      userId: rickshawUser.id,
+      cityId: jampur.id,
+      vehicleCategory: "AUTO_RICKSHAW",
+      vehicleType: "RICKSHAW",
+      vehicleMakeModel: "Sazgar 9-Seater CNG",
+      vehicleNumber: "RJP-3319",
+      cnicNumber: "32402-7788990-1",
+      licenseNumber: "LIC-RJP-4421",
+      serviceTypes: JSON.stringify(["PASSENGER_RIDE", "PARCEL_DELIVERY"]),
+      baseFare: 100.0,
+      perKmRate: 35.0,
+      status: "APPROVED",
+      isVerified: true,
+      isAvailable: true,
+      ridesCompleted: 218,
+      deliveriesCompleted: 15,
+      totalEarnings: 24500,
+      ratingAverage: 4.8,
+    },
+  });
+
+  // Seed Loader Rickshaw Driver (Merchant Cargo) User & Profile
+  const loaderUser = await prisma.user.upsert({
+    where: { phoneNumber: "+923007766554" },
+    update: {},
+    create: {
+      cityId: jampur.id,
+      phoneNumber: "+923007766554",
+      passwordHash: passwordHashRider,
+      fullName: "Haji Manzoor (Heavy Loader)",
+      fullNameUr: "حاجی منظور ہیوی لوڈر رکشہ",
+      isPhoneVerified: true,
+      roles: { create: [{ roleId: "RIDER" }, { roleId: "CUSTOMER" }] },
+    },
+  });
+
+  await prisma.deliveryRider.upsert({
+    where: { userId: loaderUser.id },
+    update: {},
+    create: {
+      userId: loaderUser.id,
+      cityId: jampur.id,
+      vehicleCategory: "LOADER_RICKSHAW",
+      vehicleType: "LOADER",
+      vehicleMakeModel: "New Asia 200cc Heavy Loader",
+      vehicleNumber: "JMP-5544",
+      cnicNumber: "32402-3344556-3",
+      licenseNumber: "LIC-JMP-8812",
+      serviceTypes: JSON.stringify(["MERCHANT_CARGO"]),
+      cargoCapacityKg: 800.0,
+      baseFare: 300.0,
+      perKmRate: 60.0,
+      status: "APPROVED",
+      isVerified: true,
+      isAvailable: true,
+      cargoTripsCompleted: 95,
+      totalEarnings: 48000,
+      ratingAverage: 5.0,
+    },
+  });
+
+  // Seed Car / AC Taxi Driver User & Profile
+  const taxiUser = await prisma.user.upsert({
+    where: { phoneNumber: "+923008899001" },
+    update: {},
+    create: {
+      cityId: jampur.id,
+      phoneNumber: "+923008899001",
+      passwordHash: passwordHashRider,
+      fullName: "Muhammad Imran (AC Cab)",
+      fullNameUr: "محمد عمران اے سی کار ٹیکسی",
+      isPhoneVerified: true,
+      roles: { create: [{ roleId: "RIDER" }, { roleId: "CUSTOMER" }] },
+    },
+  });
+
+  await prisma.deliveryRider.upsert({
+    where: { userId: taxiUser.id },
+    update: {},
+    create: {
+      userId: taxiUser.id,
+      cityId: jampur.id,
+      vehicleCategory: "CAR_TAXI",
+      vehicleType: "CAR",
+      vehicleMakeModel: "Suzuki Alto VXR AC",
+      vehicleNumber: "DGK-4421",
+      cnicNumber: "32402-9900112-5",
+      licenseNumber: "LIC-DGK-1234",
+      serviceTypes: JSON.stringify(["PASSENGER_RIDE"]),
+      baseFare: 250.0,
+      perKmRate: 50.0,
+      status: "APPROVED",
+      isVerified: true,
+      isAvailable: true,
+      ridesCompleted: 87,
+      totalEarnings: 39500,
       ratingAverage: 4.9,
     },
   });
@@ -612,15 +749,70 @@ async function main() {
     create: {
       userId: riderSajidUser.id,
       cityId: jampur.id,
+      vehicleCategory: "BIKE",
       vehicleType: "MOTORCYCLE",
+      vehicleMakeModel: "United 70cc",
       vehicleNumber: "RJP-3344",
       cnicNumber: "32402-1122334-9",
+      serviceTypes: JSON.stringify(["PASSENGER_RIDE", "PARCEL_DELIVERY"]),
       status: "PENDING", // Pending admin verification
       isVerified: false,
       isAvailable: false,
     },
   });
-  console.log("✅ Delivery Riders seeded (1 Approved, 1 Pending).");
+  // 7b. Seed Phase 2 Service Providers (Electrician & AC Tech)
+  await prisma.serviceProvider.upsert({
+    where: { userId: providerTariqUser.id },
+    update: {
+      categorySlug: "electronics",
+      primarySkill: "Electrician & House Wiring",
+      status: "APPROVED",
+      isVerified: true,
+      isAvailable: true,
+    },
+    create: {
+      userId: providerTariqUser.id,
+      cityId: jampur.id,
+      categorySlug: "electronics",
+      primarySkill: "Electrician & House Wiring",
+      primarySkillUr: "الیکٹریشن اور ہاؤس وائرنگ",
+      experienceYears: 8,
+      baseVisitFee: 500,
+      cnicNumber: "32402-5566778-1",
+      status: "APPROVED",
+      isVerified: true,
+      isAvailable: true,
+      ratingAverage: 4.9,
+      jobsCompleted: 65,
+    },
+  });
+
+  await prisma.serviceProvider.upsert({
+    where: { userId: providerImranUser.id },
+    update: {
+      categorySlug: "electronics",
+      primarySkill: "AC Repair & Cooling",
+      status: "APPROVED",
+      isVerified: true,
+      isAvailable: true,
+    },
+    create: {
+      userId: providerImranUser.id,
+      cityId: jampur.id,
+      categorySlug: "electronics",
+      primarySkill: "AC Repair & Cooling",
+      primarySkillUr: "اے سی مرمت اور کولنگ",
+      experienceYears: 6,
+      baseVisitFee: 700,
+      cnicNumber: "32402-8899001-2",
+      status: "APPROVED",
+      isVerified: true,
+      isAvailable: true,
+      ratingAverage: 4.8,
+      jobsCompleted: 48,
+    },
+  });
+  console.log("✅ Seeded Service Providers (Electrician & AC Technician).");
 
   // 8. Seed Sample Commerce Order
   const panadolProduct = await prisma.product.findFirst({

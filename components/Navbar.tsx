@@ -17,6 +17,8 @@ import {
   Wrench,
   ShoppingBag,
   Truck,
+  Car,
+  Bike,
   Sparkles,
   Sprout,
   GraduationCap,
@@ -227,6 +229,18 @@ export default function Navbar() {
             </NextLink>
 
             <NextLink
+              href="/rides"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
+                pathname.startsWith("/rides")
+                  ? "text-emerald-700 bg-emerald-50 font-bold"
+                  : "hover:text-slate-900"
+              }`}
+            >
+              <Car className="w-4 h-4 text-emerald-600" />
+              <span>Rides & Loaders (سواری)</span>
+            </NextLink>
+
+            <NextLink
               href="/explore"
               className={`px-3 py-2 rounded-lg transition-colors ${
                 pathname === "/explore" ? "text-emerald-700 bg-emerald-50" : "hover:text-slate-900"
@@ -322,6 +336,15 @@ export default function Navbar() {
                       My Service Requests
                     </NextLink>
 
+                    <NextLink
+                      href="/rides/my-rides"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                    >
+                      <Car className="w-4 h-4 text-emerald-600" />
+                      My Rides & Bookings
+                    </NextLink>
+
                     {isRider && (
                       <NextLink
                         href="/rider/dashboard"
@@ -329,7 +352,7 @@ export default function Navbar() {
                         className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-700 font-medium hover:bg-emerald-50"
                       >
                         <Truck className="w-4 h-4 text-emerald-600" />
-                        Rider Dashboard
+                        Driver & Fleet Dashboard
                       </NextLink>
                     )}
 
@@ -356,14 +379,24 @@ export default function Navbar() {
                     )}
 
                     {isAdmin && (
-                      <NextLink
-                        href="/admin"
-                        onClick={() => setIsUserMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-indigo-700 font-medium hover:bg-indigo-50"
-                      >
-                        <ShieldCheck className="w-4 h-4 text-indigo-600" />
-                        Admin Console
-                      </NextLink>
+                      <>
+                        <NextLink
+                          href="/admin/riders"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-emerald-700 font-medium hover:bg-emerald-50"
+                        >
+                          <Truck className="w-4 h-4 text-emerald-600" />
+                          Fleet Management
+                        </NextLink>
+                        <NextLink
+                          href="/admin"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-indigo-700 font-medium hover:bg-indigo-50"
+                        >
+                          <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                          Admin Console
+                        </NextLink>
+                      </>
                     )}
 
                     <div className="border-t border-slate-100 my-1" />
@@ -438,6 +471,23 @@ export default function Navbar() {
               className="px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg"
             >
               Services Marketplace (خدمات)
+            </NextLink>
+
+            <NextLink
+              href="/rides"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="px-3 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-50 rounded-lg flex items-center justify-between"
+            >
+              <span>🚖 Rides & Loaders (سواری و لوڈر)</span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 font-black">Book</span>
+            </NextLink>
+
+            <NextLink
+              href="/rides/my-rides"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg"
+            >
+              My Rides & Bookings
             </NextLink>
 
             <NextLink

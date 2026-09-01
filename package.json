@@ -10,7 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:seed": "tsx prisma/seed.ts",
-    "test": "node --test tests/auth.test.mjs tests/validation.test.mjs tests/business-rules.test.mjs tests/database-flow.test.mjs tests/api-e2e.test.mjs tests/phase2-marketplace.test.mjs tests/phase3-commerce.test.mjs tests/phase4-ai.test.mjs tests/phase5-farmer.test.mjs tests/phase6-student.test.mjs tests/phase7-multicity.test.mjs tests/phase8-master-e2e.test.mjs"
+    "test": "node --test tests/auth.test.mjs tests/validation.test.mjs tests/business-rules.test.mjs tests/database-flow.test.mjs tests/api-e2e.test.mjs tests/phase2-marketplace.test.mjs tests/phase3-commerce.test.mjs tests/phase4-ai.test.mjs tests/phase5-farmer.test.mjs tests/phase6-student.test.mjs tests/phase7-multicity.test.mjs tests/phase8-master-e2e.test.mjs tests/rides-fleet.test.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

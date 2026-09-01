@@ -47,6 +47,7 @@ model City {
   studentGroups    StudentGroup[]
   adCampaigns      AdCampaign[]
   analyticsEvents  AnalyticsEvent[]
+  rideBookings     RideBooking[]
 
   @@map("cities")
 }
@@ -118,6 +119,10 @@ model User {
 
   // Phase 6 Relations
   studentProfile       StudentProfile?   @relation("UserStudentProfile")
+
+  // Unified Ride-Hailing & Logistics Relations
+  customerRideBookings RideBooking[]     @relation("CustomerRideBookings")
+  givenRideReviews     RideReview[]      @relation("CustomerRideReviews")
 
   @@map("users")
 }
@@ -443,23 +448,83 @@ model DeliveryRider {
   id                  String        @id @default(uuid())
   userId              String        @unique
   cityId              String
-  vehicleType         String        @default("MOTORCYCLE") // MOTORCYCLE, RICKSHAW, BICYCLE
+  vehicleCategory     String        @default("BIKE") // BIKE, AUTO_RICKSHAW, LOADER_RICKSHAW, CAR_TAXI, PICKUP_TRUCK
+  vehicleType         String        @default("MOTORCYCLE") // MOTORCYCLE, RICKSHAW, LOADER, CAR, BICYCLE
+  vehicleMakeModel    String?       // e.g. "Honda CD 70", "Sazgar 9-Seater", "New Asia 200cc Loader", "Suzuki Alto"
   vehicleNumber       String        @default("DGK-1234")
   cnicNumber          String
+  licenseNumber       String?
+  serviceTypes        String        @default("[\"PASSENGER_RIDE\",\"PARCEL_DELIVERY\"]") // JSON array: PASSENGER_RIDE, MERCHANT_CARGO, PARCEL_DELIVERY
+  cargoCapacityKg     Float?        // For loaders/trucks (e.g. 500, 1000 kg)
+  baseFare            Float         @default(50.0) // PKR
+  perKmRate           Float         @default(20.0) // PKR/km
   status              String        @default("PENDING") // PENDING, APPROVED, REJECTED, SUSPENDED
   isVerified          Boolean       @default(false)
   isAvailable         Boolean       @default(true)
   deliveriesCompleted Int           @default(0)
+  ridesCompleted      Int           @default(0)
+  cargoTripsCompleted Int           @default(0)
   totalEarnings       Float         @default(0.0)
-  ratingAverage       Float         @default(0.0)
+  ratingAverage       Float         @default(5.0)
+  reviewCount         Int           @default(0)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
   user                User          @relation("UserDeliveryRider", fields: [userId], references: [id], onDelete: Cascade)
   city                City          @relation(fields: [cityId], references: [id])
   assignedOrders      Order[]       @relation("RiderOrders")
+  rideBookings        RideBooking[] @relation("RiderRideBookings")
+  rideReviews         RideReview[]  @relation("RiderRideReviews")
 
   @@map("delivery_riders")
+}
+
+model RideBooking {
+  id                 String       @id @default(uuid())
+  cityId             String
+  bookingNumber      String       @unique // e.g. "RIDE-2026-0001"
+  customerId         String
+  riderId            String?
+  serviceType        String       @default("PASSENGER_RIDE") // PASSENGER_RIDE, MERCHANT_CARGO
+  vehicleCategory    String       @default("BIKE") // BIKE, AUTO_RICKSHAW, LOADER_RICKSHAW, CAR_TAXI, PICKUP_TRUCK
+  pickupAddress      String
+  dropoffAddress     String
+  pickupArea         String       @default("Main Bazaar")
+  dropoffArea        String       @default("College Road")
+  cargoDescription   String?      // e.g. "30 bags of wheat from Mandi to Shop"
+  estimatedWeightKg  Float?
+  fareAmount         Float        // in PKR
+  paymentMethod      String       @default("CASH") // CASH, JAZZCASH, EASYPAISA
+  paymentStatus      String       @default("PENDING") // PENDING, PAID
+  status             String       @default("REQUESTED") // REQUESTED, ACCEPTED, ARRIVED, IN_TRANSIT, COMPLETED, CANCELLED
+  completionPin      String       @default("1234") // 4-digit PIN verified by driver upon completion
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  city               City          @relation(fields: [cityId], references: [id])
+  customer           User          @relation("CustomerRideBookings", fields: [customerId], references: [id], onDelete: Cascade)
+  rider              DeliveryRider? @relation("RiderRideBookings", fields: [riderId], references: [id])
+  review             RideReview?
+
+  @@index([cityId, status])
+  @@index([riderId, status])
+  @@map("ride_bookings")
+}
+
+model RideReview {
+  id         String      @id @default(uuid())
+  rideId     String      @unique
+  riderId    String
+  customerId String
+  rating     Int         @default(5)
+  comment    String?
+  createdAt  DateTime    @default(now())
+
+  ride       RideBooking   @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  rider      DeliveryRider @relation("RiderRideReviews", fields: [riderId], references: [id], onDelete: Cascade)
+  customer   User          @relation("CustomerRideReviews", fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("ride_reviews")
 }
 
 model Order {

@@ -53,12 +53,39 @@ export default async function RiderDashboardPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  // Fetch available ride/cargo requests in city
+  const availableRides = await prisma.rideBooking.findMany({
+    where: {
+      cityId: rider.cityId,
+      status: "REQUESTED",
+      OR: [{ riderId: null }, { riderId: rider.id }],
+    },
+    include: {
+      customer: { select: { fullName: true, phoneNumber: true } },
+      city: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  // Fetch active and assigned rides
+  const assignedRides = await prisma.rideBooking.findMany({
+    where: { riderId: rider.id },
+    include: {
+      customer: { select: { fullName: true, phoneNumber: true } },
+      city: true,
+      review: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-6">
       <RiderDashboardClient
         rider={rider}
         availableOrders={availableOrders}
         assignedOrders={assignedOrders}
+        availableRides={availableRides}
+        assignedRides={assignedRides}
       />
     </div>
   );

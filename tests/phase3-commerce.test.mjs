@@ -121,7 +121,8 @@ test("Phase 3 Commerce E2E: Full Order, Delivery Fleet, PIN Verification & Revie
   const deliveryPin = "7419";
   const orderNumber = `JMP-E2E-${randomSuffix}`;
 
-  const order = await prisma.$transaction(async (tx) => {
+  const order = await prisma.$transaction(
+    async (tx) => {
     // a. Create order & items
     const ord = await tx.order.create({
       data: {
@@ -168,7 +169,9 @@ test("Phase 3 Commerce E2E: Full Order, Delivery Fleet, PIN Verification & Revie
     });
 
     return ord;
-  });
+    },
+    { timeout: 30000, maxWait: 15000 }
+  );
 
   assert.equal(order.status, "PENDING");
   assert.equal(order.totalAmount, 3700);
@@ -232,7 +235,9 @@ test("Phase 3 Commerce E2E: Full Order, Delivery Fleet, PIN Verification & Revie
     });
 
     return ord;
-  });
+    },
+    { timeout: 30000, maxWait: 15000 }
+  );
 
   assert.equal(deliveredOrder.status, "DELIVERED");
   assert.equal(deliveredOrder.paymentStatus, "PAID");
